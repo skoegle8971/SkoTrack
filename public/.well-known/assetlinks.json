@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.manoj2002.aaventra",
+      "sha256_cert_fingerprints": [
+        "62:64:BF:A7:B1:52:21:D7:17:7A:14:4D:26:F6:A4:41:B4:F4:79:0E:72:FF:B7:7E:C2:D4:68:8B:88:E0:77:7A",
+        "E4:C8:53:17:BB:C6:01:2A:F0:77:6C:12:0C:5D:6E:BD:40:19:00:2D:AC:28:FF:0A:6F:11:DE:C3:24:2E:54:F1"
+      ]
+    }
+  }
+]
