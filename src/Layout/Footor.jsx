@@ -40,7 +40,7 @@ export default function Footer() {
                   WebkitTextFillColor: 'transparent' 
                 }}
               >
-                V-MARG
+                Sko-Track
               </Typography>
               <Typography 
                 variant="subtitle2" 

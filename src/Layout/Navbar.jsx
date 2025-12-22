@@ -92,7 +92,7 @@ export default function Navbar() {
         >
           <Typography variant="h5">V</Typography>
         </Avatar>
-        <Typography variant="h6" align="center" sx={{ fontWeight: 'bold' }}>V-MARG</Typography>
+        <Typography variant="h6" align="center" sx={{ fontWeight: 'bold' }}>Sko-Track</Typography>
         <Typography variant="caption" align="center" sx={{ color: 'text.secondary' }}>Skoegle IOT Innovations Pvt Ltd</Typography>
       </Box>
       
@@ -399,7 +399,7 @@ export default function Navbar() {
                 letterSpacing: 1
               }}
             >
-              V-MARG
+              Sko-Track
             </Typography>
           </Box>
         </Box>

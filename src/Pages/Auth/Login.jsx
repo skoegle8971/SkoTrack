@@ -732,7 +732,7 @@ export default function Login() {
                       Welcome Back
                     </Typography>
                     <Typography variant="body1" sx={{ opacity: 0.9, mb: 2 }}>
-                      Log in to access your V-Marg account and track your
+                      Log in to access your Sko-Track account and track your
                       devices securely.
                     </Typography>
                     <Box sx={{ mt: 4 }}>
@@ -753,7 +753,7 @@ export default function Login() {
 
                   <Box sx={{ position: "absolute", bottom: 20, opacity: 0.7 }}>
                     <Typography variant="caption">
-                      © {new Date().getFullYear()} V-Marg by Skoegle
+                      © {new Date().getFullYear()} Sko-Track by Skoegle
                     </Typography>
                   </Box>
                 </Grid>
