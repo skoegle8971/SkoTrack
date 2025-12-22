@@ -17,7 +17,7 @@ export default function LoginNav(){
       <AppBar position="static" sx={{ backgroundColor: "rgb(4,4,38)" }}>
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {/* <Typography variant="h6">Skoegle</Typography> */}
-          <Typography variant="h6" sx={{ flexGrow: 1, textAlign: "center" }}>Sko-Track</Typography>
+          <Typography variant="h6" sx={{ flexGrow: 1, textAlign: "center" }}>SkoTrack</Typography>
           <Box>
             <IconButton color="inherit" onClick={handleMenuOpen}>
               <MenuIcon />

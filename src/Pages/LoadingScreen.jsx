@@ -270,7 +270,7 @@ const LoadingScreen = () => {
                 letterSpacing: 1,
               }}
             >
-              Sko-Track
+              SkoTrack
             </Typography>
             
             <Typography 
@@ -400,7 +400,7 @@ const LoadingScreen = () => {
                   }}
                 >
                   {progress < 50 ? 
-                    "Tip: Sko-Track provides real-time location tracking for your entire fleet" : 
+                    "Tip: SkoTrack provides real-time location tracking for your entire fleet" : 
                     progress < 80 ? 
                     "Tip: You can set up custom alerts for specific geographic zones" :
                     "Tip: Access your tracking data securely from any device"}

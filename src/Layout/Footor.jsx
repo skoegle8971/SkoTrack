@@ -40,7 +40,7 @@ export default function Footer() {
                   WebkitTextFillColor: 'transparent' 
                 }}
               >
-                Sko-Track
+                SkoTrack
               </Typography>
               <Typography 
                 variant="subtitle2" 
