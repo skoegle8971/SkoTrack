@@ -128,7 +128,7 @@ export default function Live() {
             // 🏃 Activity
             sc: apiData.stepcount ?? 0,
             cal: apiData.calories ?? 0,
-            dis: apiData.distance ?? 0,
+            distance: apiData.distance ?? 0,
           },
         }));
         setMapCenter({ lat: latitude, lng: longitude });
