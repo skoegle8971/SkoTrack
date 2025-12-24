@@ -734,7 +734,7 @@ const DeviceStatusCard = ({
                           {deviceData[selectedDevice]?.distance
                             ? (
                                 Number(deviceData[selectedDevice].distance)
-                              ).toFixed(2)
+                              ).toFixed(1)
                             : "0.00"}{" "}
                           km
                         </Typography>
