@@ -713,7 +713,7 @@ const DeviceStatusCard = ({
                           Calories
                         </Typography>
                         <Typography variant="body2" fontWeight="bold">
-                          {deviceData[selectedDevice]?.cal ?? 0} kcal
+                          {Number(deviceData[selectedDevice]?.cal).toFixed(2) ?? 0} kcal
                         </Typography>
                       </Box>
                     </Box>
