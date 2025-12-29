@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Layout from "../Layout/Layout";
+import DownloadIcon from "@mui/icons-material/Download";
+
+import Stack from "@mui/material/Stack";
 import {
   Typography,
   Container,
@@ -19,9 +22,9 @@ import {
   Tooltip,
   Button,
   Snackbar,
-  Alert
+  Alert,
 } from "@mui/material";
-import { 
+import {
   Map as MapIcon,
   Explore as ExploreIcon,
   Navigation as NavigationIcon,
@@ -30,21 +33,21 @@ import {
   CalendarToday as CalendarIcon,
   DevicesOther as DeviceIcon,
   Refresh as RefreshIcon,
-  LocationOn as LocationOnIcon
+  LocationOn as LocationOnIcon,
 } from "@mui/icons-material";
 import { useStore } from "../Store/Store";
 
 const LiveGPSTracker = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("md", "lg"));
+
   const mapRef = useRef(null);
   const polylineRefs = useRef({});
   const markerRefs = useRef({});
   const circleMarkerRefs = useRef([]); // To track all circle markers
   const popupRef = useRef(null); // Reference for the click popup
-  
+
   const [logsData, setLogsData] = useState({});
   const [selectedDeviceIndex, setSelectedDeviceIndex] = useState(0);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -56,10 +59,13 @@ const LiveGPSTracker = () => {
   const [loading, setLoading] = useState(true);
   const [mapLoading, setMapLoading] = useState(true);
   const [clickedCoordinates, setClickedCoordinates] = useState(null);
-  
+
   // Get the current selected device based on the index
   const selectedDevice = devices[selectedDeviceIndex]?.deviceName || "";
-  const currentDeviceLabel = devices[selectedDeviceIndex]?.nickname || devices[selectedDeviceIndex]?.deviceName || "No Device";
+  const currentDeviceLabel =
+    devices[selectedDeviceIndex]?.nickname ||
+    devices[selectedDeviceIndex]?.deviceName ||
+    "No Device";
 
   const calculateDefaultDate = () => {
     const today = new Date();
@@ -108,8 +114,8 @@ const LiveGPSTracker = () => {
     setSelectedDeviceIndex(index);
     clearMapData(); // Make sure to clear map data when selecting a new device
   };
-  
-  // Clear all map data 
+
+  // Clear all map data
   const clearMapData = () => {
     // Clear existing polylines
     Object.keys(polylineRefs.current).forEach((device) => {
@@ -126,22 +132,26 @@ const LiveGPSTracker = () => {
         delete markerRefs.current[device];
       }
     });
-    
+
     // Clear all circle markers
-    circleMarkerRefs.current.forEach(marker => {
+    circleMarkerRefs.current.forEach((marker) => {
       if (marker && marker.remove) {
         marker.remove();
       }
     });
-    
+
     // Reset the array of circle markers
     circleMarkerRefs.current = [];
-    
+
     // If a map instance exists, try to clear all layers as a fail-safe
     if (mapRef.current) {
       // Remove any layers that might not be tracked properly
-      mapRef.current.eachLayer(layer => {
-        if (layer instanceof L.CircleMarker || layer instanceof L.Marker || layer instanceof L.Polyline) {
+      mapRef.current.eachLayer((layer) => {
+        if (
+          layer instanceof L.CircleMarker ||
+          layer instanceof L.Marker ||
+          layer instanceof L.Polyline
+        ) {
           // Skip the base tile layer
           if (!layer._url) {
             mapRef.current.removeLayer(layer);
@@ -149,7 +159,7 @@ const LiveGPSTracker = () => {
         }
       });
     }
-    
+
     // Close any active popup
     if (popupRef.current) {
       mapRef.current.closePopup(popupRef.current);
@@ -166,7 +176,10 @@ const LiveGPSTracker = () => {
           setDevices(devicesData.devices);
           setSelectedDeviceIndex(0); // Start with the first device
         } else {
-          showSnackbar("No registered devices found. Please register a device.", "warning");
+          showSnackbar(
+            "No registered devices found. Please register a device.",
+            "warning"
+          );
         }
       } catch (error) {
         console.error("Error fetching devices:", error);
@@ -188,33 +201,37 @@ const LiveGPSTracker = () => {
         maxZoom: 19,
         attribution: "© OpenStreetMap contributors",
       }).addTo(mapRef.current);
-      
+
       // Add zoom control to bottom right
-      L.control.zoom({
-        position: 'bottomright'
-      }).addTo(mapRef.current);
-      
+      L.control
+        .zoom({
+          position: "bottomright",
+        })
+        .addTo(mapRef.current);
+
       // Add click event to show coordinates
-      mapRef.current.on('click', function(e) {
+      mapRef.current.on("click", function (e) {
         const { lat, lng } = e.latlng;
         setClickedCoordinates({ lat: lat, lng: lng.toFixed(6) });
-        
+
         // Close previous popup if exists
         if (popupRef.current) {
           mapRef.current.closePopup(popupRef.current);
         }
-        
+
         // Create new popup
         popupRef.current = L.popup()
           .setLatLng(e.latlng)
-          .setContent(`<div style="text-align:center">
+          .setContent(
+            `<div style="text-align:center">
                         <strong>Coordinates</strong><br>
                         Lat: ${lat.toFixed(6)}<br>
                         Lng: ${lng.toFixed(6)}
-                      </div>`)
+                      </div>`
+          )
           .openOn(mapRef.current);
       });
-      
+
       setMapLoading(false);
     }
 
@@ -224,7 +241,7 @@ const LiveGPSTracker = () => {
     return () => {
       clearMapData();
       if (mapRef.current) {
-        mapRef.current.off('click');
+        mapRef.current.off("click");
         mapRef.current.remove();
         mapRef.current = null;
       }
@@ -236,15 +253,76 @@ const LiveGPSTracker = () => {
     if (selectedDevice) {
       // Clear previous device data when selected device changes
       clearMapData();
-      
+
       // Fetch logs for the new device
       fetchLogs();
     }
   }, [selectedDevice, date]);
 
+  const SaveAsCsv = async () => {
+    try {
+      const response = await fetch(
+        `https://vmarg.skoegle.co.in/api/skotrack/reports/${selectedDevice}?date=${date}`
+      );
+
+      const reportLogs = await response.json();
+
+      if (!Array.isArray(reportLogs) || reportLogs.length === 0) {
+        alert("No data available to export");
+        return;
+      }
+
+      // 🔹 Select & order fields for CSV
+      const headers = [
+        "deviceName",
+        "latitude",
+        "longitude",
+        "date",
+        "time",
+        "battery",
+        "reserve",
+        "GPS",
+        "stepcount",
+        "HR",
+        "SPO2",
+        "BP",
+        "temperature",
+        "distance",
+        "calories",
+        "createdAt",
+      ];
+
+      // 🔹 Convert JSON → CSV
+      const csvRows = [
+        headers.join(","), // header row
+        ...reportLogs.map((row) =>
+          headers.map((field) => `"${row[field] ?? ""}"`).join(",")
+        ),
+      ];
+
+      const csvContent = csvRows.join("\n");
+
+      // 🔹 Create & trigger download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Report_${selectedDevice}_${date}.csv`;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("CSV Export Error:", error);
+      alert("Failed to export CSV");
+    }
+  };
+
   const fetchLogs = async () => {
     if (!selectedDevice) return;
-    
+
     setMapLoading(true);
     clearMapData(); // Clear data before fetching new data
     showSnackbar("Fetching logs for " + currentDeviceLabel, "info");
@@ -261,15 +339,21 @@ const LiveGPSTracker = () => {
           time: log.time,
           date: log.date,
         }));
-        
+
         // Clear existing data first to ensure we only show the current device
         setLogsData({ [selectedDevice]: organizedData });
         renderLogsOnMap({ [selectedDevice]: organizedData });
-        showSnackbar("Found " + organizedData.length + " location points", "success");
+        showSnackbar(
+          "Found " + organizedData.length + " location points",
+          "success"
+        );
       } else {
         setLogsData({ [selectedDevice]: [] });
         renderLogsOnMap({ [selectedDevice]: [] });
-        showSnackbar("No data found for the selected date and device", "warning");
+        showSnackbar(
+          "No data found for the selected date and device",
+          "warning"
+        );
       }
     } catch (error) {
       console.error("Error fetching logs:", error);
@@ -308,27 +392,29 @@ const LiveGPSTracker = () => {
         color: theme.palette.primary.main,
         weight: 3,
         opacity: 0.7,
-        lineJoin: 'round'
+        lineJoin: "round",
       }).addTo(mapRef.current);
 
       // Add small dots for each point in the route - store references to remove later
       route.forEach((point, index) => {
-        if (index % 5 === 0 || index === 0 || index === route.length - 1) { 
+        if (index % 5 === 0 || index === 0 || index === route.length - 1) {
           // Only show markers at intervals to reduce clutter
-          const circleMarker = L.circleMarker(point, { 
-            radius: 3, 
+          const circleMarker = L.circleMarker(point, {
+            radius: 3,
             color: theme.palette.secondary.main,
-            fillOpacity: 0.7
+            fillOpacity: 0.7,
           })
-          .bindPopup(`<div style="text-align:center">
+            .bindPopup(
+              `<div style="text-align:center">
                       <strong>Point ${index + 1}</strong><br>
                       Lat: ${point[0].toFixed(6)}<br>
                       Lng: ${point[1].toFixed(6)}<br>
                       Time: ${routeData[index].time} <br/>
                       Date : ${routeData[index].date}
-                    </div>`)
-          .addTo(mapRef.current);
-          
+                    </div>`
+            )
+            .addTo(mapRef.current);
+
           // Store reference to circle marker for later removal
           circleMarkerRefs.current.push(circleMarker);
         }
@@ -354,21 +440,33 @@ const LiveGPSTracker = () => {
         // Add start and end markers with popups showing time
         const startPoint = routeData[0];
         const endPoint = routeData[routeData.length - 1];
-        
+
         const startMarker = L.marker(route[0], { icon: startIcon })
-          .bindPopup(`<strong>Start</strong><br>Time: ${startPoint.time}<br>Date: ${startPoint.date}<br>Lat: ${startPoint.lat.toFixed(6)}<br>Lng: ${startPoint.lng.toFixed(6)}`)
+          .bindPopup(
+            `<strong>Start</strong><br>Time: ${startPoint.time}<br>Date: ${
+              startPoint.date
+            }<br>Lat: ${startPoint.lat.toFixed(
+              6
+            )}<br>Lng: ${startPoint.lng.toFixed(6)}`
+          )
           .addTo(mapRef.current);
-          
+
         const endMarker = L.marker(route[route.length - 1], { icon: endIcon })
-          .bindPopup(`<strong>End</strong><br>Time: ${endPoint.time}<br>Date: ${endPoint.date}<br>Lat: ${endPoint.lat.toFixed(6)}<br>Lng: ${endPoint.lng.toFixed(6)}`)
+          .bindPopup(
+            `<strong>End</strong><br>Time: ${endPoint.time}<br>Date: ${
+              endPoint.date
+            }<br>Lat: ${endPoint.lat.toFixed(6)}<br>Lng: ${endPoint.lng.toFixed(
+              6
+            )}`
+          )
           .addTo(mapRef.current);
-        
+
         markerRefs.current[device] = [startMarker, endMarker];
 
         // Fit map to show all points
         mapRef.current.fitBounds(polylineRefs.current[device].getBounds(), {
           padding: [50, 50],
-          maxZoom: 16
+          maxZoom: 16,
         });
       }
     });
@@ -389,7 +487,7 @@ const LiveGPSTracker = () => {
       showSnackbar("Not enough points to view on Google Maps", "warning");
       return;
     }
-    
+
     const pointsToShare = getPointsToShare(route);
     generateShareUrl(pointsToShare);
   };
@@ -400,7 +498,7 @@ const LiveGPSTracker = () => {
       showSnackbar("Not enough points to view on GraphHopper", "warning");
       return;
     }
-    
+
     const pointsToShare = getPointsToShare(route);
     generateGraphHopperUrl(pointsToShare);
   };
@@ -409,7 +507,7 @@ const LiveGPSTracker = () => {
     if (points.length <= 20) return points;
 
     const result = [points[0]]; // Always include first point
-    
+
     // Add evenly spaced points from the middle
     const step = Math.floor((points.length - 2) / 18);
     for (let i = 1; i < points.length - 1; i += step) {
@@ -417,7 +515,7 @@ const LiveGPSTracker = () => {
         result.push(points[i]);
       }
     }
-    
+
     result.push(points[points.length - 1]); // Always include last point
     return result;
   };
@@ -427,9 +525,11 @@ const LiveGPSTracker = () => {
       showSnackbar("Not enough points to generate a shareable link", "warning");
       return;
     }
-    
+
     const urlBase = "https://www.google.com/maps/dir/";
-    const coords = pathPoints.map((point) => `${point.lat},${point.lng}`).join("/");
+    const coords = pathPoints
+      .map((point) => `${point.lat},${point.lng}`)
+      .join("/");
     const url = `${urlBase}${coords}?entry=ttu`;
     window.open(url, "_blank");
     showSnackbar("Opening route in Google Maps", "success");
@@ -437,15 +537,18 @@ const LiveGPSTracker = () => {
 
   const generateGraphHopperUrl = (pathPoints) => {
     if (pathPoints.length < 2) {
-      showSnackbar("Not enough points to generate a GraphHopper link", "warning");
+      showSnackbar(
+        "Not enough points to generate a GraphHopper link",
+        "warning"
+      );
       return;
     }
-    
+
     // Format for GraphHopper: ?point=lat,lng&point=lat,lng&...
     const pointParams = pathPoints
-      .map(point => `point=${point.lat}%2C${point.lng}`)
+      .map((point) => `point=${point.lat}%2C${point.lng}`)
       .join("&");
-    
+
     const url = `https://graphhopper.com/maps/?${pointParams}&profile=car&layer=Omniscale`;
     window.open(url, "_blank");
     showSnackbar("Opening route in GraphHopper", "success");
@@ -468,76 +571,84 @@ const LiveGPSTracker = () => {
   // Only show first 8 characters for long device names
   const formatDeviceLabel = (label) => {
     if (label.length > 8) {
-      return label.substring(0, 8) + '...';
+      return label.substring(0, 8) + "...";
     }
     return label;
   };
 
   // Current date time and user info
   const getCurrentDateTime = () => {
-    return Date().toLocaleString()
+    return Date().toLocaleString();
   };
 
   return (
     <Layout title="Device Path Finder">
       <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          width: '100%',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          position: 'relative'
-        }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            borderRadius: "12px",
+            overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            position: "relative",
+          }}
+        >
           {/* Device Navigation at the top */}
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: 2, 
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
               borderBottom: `1px solid ${theme.palette.divider}`,
               backgroundColor: theme.palette.background.paper,
-              borderTopLeftRadius: '12px',
-              borderTopRightRadius: '12px',
+              borderTopLeftRadius: "12px",
+              borderTopRightRadius: "12px",
             }}
           >
             <Grid container alignItems="center" spacing={1}>
               <Grid item>
-                <IconButton 
-                  color="primary" 
+                <IconButton
+                  color="primary"
                   onClick={goToPreviousDevice}
                   disabled={devices.length <= 1}
                 >
                   <ChevronLeftIcon />
                 </IconButton>
               </Grid>
-              
+
               <Grid item xs>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <DeviceIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography 
+                  <Typography
                     variant={isMobile ? "subtitle1" : "h6"}
-                    sx={{ 
-                      fontWeight: 'medium',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                    sx={{
+                      fontWeight: "medium",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {currentDeviceLabel || "No Device Selected"}
                   </Typography>
                 </Box>
               </Grid>
-              
+
               {!isMobile && (
                 <Grid item>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: "flex", gap: 1 }}>
                     {devices.map((device, index) => (
                       <Chip
                         key={device.deviceCode}
-                        label={formatDeviceLabel(device.nickname || device.deviceName)}
-                        color={index === selectedDeviceIndex ? "primary" : "default"}
-                        variant={index === selectedDeviceIndex ? "filled" : "outlined"}
+                        label={formatDeviceLabel(
+                          device.nickname || device.deviceName
+                        )}
+                        color={
+                          index === selectedDeviceIndex ? "primary" : "default"
+                        }
+                        variant={
+                          index === selectedDeviceIndex ? "filled" : "outlined"
+                        }
                         onClick={() => handleDeviceSelect(index)}
                         clickable
                       />
@@ -545,19 +656,19 @@ const LiveGPSTracker = () => {
                   </Box>
                 </Grid>
               )}
-              
+
               <Grid item>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <CalendarIcon color="action" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="textSecondary">
-                    {date.split('-').join('/')}
+                    {date.split("-").join("/")}
                   </Typography>
                 </Box>
               </Grid>
-              
+
               <Grid item>
-                <IconButton 
-                  color="primary" 
+                <IconButton
+                  color="primary"
                   onClick={goToNextDevice}
                   disabled={devices.length <= 1}
                 >
@@ -566,98 +677,109 @@ const LiveGPSTracker = () => {
               </Grid>
             </Grid>
           </Paper>
-          
+
           <Grid container sx={{ flexGrow: 1 }}>
             {/* Map Container */}
-            <Grid item xs={12} md={8} lg={9} sx={{ position: 'relative' }}>
+            <Grid item xs={12} md={8} lg={9} sx={{ position: "relative" }}>
               {mapLoading && (
-                <Box sx={{ 
-                  position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  right: 0, 
-                  bottom: 0, 
-                  zIndex: 10, 
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexDirection: 'column'
-                }}>
-                  <Skeleton 
-                    variant="rectangular" 
-                    animation="wave" 
-                    width="70%" 
-                    height={20} 
-                    sx={{ mb: 2, borderRadius: 1 }} 
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 10,
+                    backgroundColor: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "column",
+                  }}
+                >
+                  <Skeleton
+                    variant="rectangular"
+                    animation="wave"
+                    width="70%"
+                    height={20}
+                    sx={{ mb: 2, borderRadius: 1 }}
                   />
-                  <Skeleton 
-                    variant="rectangular" 
-                    animation="wave" 
-                    width="50%" 
-                    height={20} 
-                    sx={{ mb: 2, borderRadius: 1 }} 
+                  <Skeleton
+                    variant="rectangular"
+                    animation="wave"
+                    width="50%"
+                    height={20}
+                    sx={{ mb: 2, borderRadius: 1 }}
                   />
-                  <Skeleton 
-                    variant="rectangular" 
-                    animation="wave" 
-                    width="60%" 
-                    height={20} 
-                    sx={{ borderRadius: 1 }} 
+                  <Skeleton
+                    variant="rectangular"
+                    animation="wave"
+                    width="60%"
+                    height={20}
+                    sx={{ borderRadius: 1 }}
                   />
                 </Box>
               )}
-              
-              <Box 
-                id="map" 
-                sx={{ 
-                  height: { xs: '50vh', md: '70vh' }, 
-                  borderRight: { xs: 'none', md: `1px solid ${theme.palette.divider}` },
-                  borderBottom: { xs: `1px solid ${theme.palette.divider}`, md: 'none' }
+
+              <Box
+                id="map"
+                sx={{
+                  height: { xs: "50vh", md: "70vh" },
+                  borderRight: {
+                    xs: "none",
+                    md: `1px solid ${theme.palette.divider}`,
+                  },
+                  borderBottom: {
+                    xs: `1px solid ${theme.palette.divider}`,
+                    md: "none",
+                  },
                 }}
               />
-              
+
               {/* Coordinate Display Badge */}
               {clickedCoordinates && (
                 <Paper
                   elevation={2}
                   sx={{
-                    position: 'absolute',
+                    position: "absolute",
                     bottom: 16,
                     left: 16,
                     zIndex: 400,
                     p: 1,
                     borderRadius: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    maxWidth: '90%'
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    display: "flex",
+                    alignItems: "center",
+                    maxWidth: "90%",
                   }}
                 >
                   <LocationOnIcon color="primary" sx={{ mr: 1 }} />
                   <Typography variant="body2">
-                    <strong>Lat:</strong> {clickedCoordinates.lat}, <strong>Lng:</strong> {clickedCoordinates.lng}
+                    <strong>Lat:</strong> {clickedCoordinates.lat},{" "}
+                    <strong>Lng:</strong> {clickedCoordinates.lng}
                   </Typography>
                 </Paper>
               )}
-              
+
               {/* Reload Button */}
-              <Box sx={{ 
-                position: 'absolute', 
-                top: 16, 
-                right: 16, 
-                zIndex: 400,
-              }}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  zIndex: 400,
+                }}
+              >
                 <Tooltip title="Reload Data">
-                  <IconButton 
-                    color="primary" 
+                  <IconButton
+                    color="primary"
                     onClick={handleRefresh}
-                    sx={{ 
-                      backgroundColor: 'white', 
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                      '&:hover': {
-                        backgroundColor: '#f5f5f5'
-                      }
+                    sx={{
+                      backgroundColor: "white",
+                      boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                      "&:hover": {
+                        backgroundColor: "#f5f5f5",
+                      },
                     }}
                   >
                     <RefreshIcon />
@@ -665,29 +787,54 @@ const LiveGPSTracker = () => {
                 </Tooltip>
               </Box>
             </Grid>
-            
+
             {/* Controls Container */}
-            <Grid item xs={12} md={4} lg={3} sx={{ 
-              backgroundColor: theme.palette.background.paper,
-              borderBottomRightRadius: '12px'
-            }}>
+            <Grid
+              item
+              xs={12}
+              md={4}
+              lg={3}
+              sx={{
+                backgroundColor: theme.palette.background.paper,
+                borderBottomRightRadius: "12px",
+              }}
+            >
               <Box sx={{ p: 2 }}>
                 {loading ? (
                   <Box sx={{ p: 2 }}>
                     <Skeleton variant="text" height={40} width="60%" />
-                    <Skeleton variant="rectangular" height={56} sx={{ my: 2, borderRadius: 1 }} />
+                    <Skeleton
+                      variant="rectangular"
+                      height={56}
+                      sx={{ my: 2, borderRadius: 1 }}
+                    />
                     <Skeleton variant="text" height={40} width="80%" />
-                    <Skeleton variant="rectangular" height={150} sx={{ my: 2, borderRadius: 1 }} />
-                    <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: 1 }} />
-                    <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: 1 }} />
+                    <Skeleton
+                      variant="rectangular"
+                      height={150}
+                      sx={{ my: 2, borderRadius: 1 }}
+                    />
+                    <Skeleton
+                      variant="rectangular"
+                      height={40}
+                      sx={{ mb: 2, borderRadius: 1 }}
+                    />
+                    <Skeleton
+                      variant="rectangular"
+                      height={40}
+                      sx={{ mb: 2, borderRadius: 1 }}
+                    />
                   </Box>
                 ) : (
                   <>
                     <Typography variant="h6" gutterBottom>
-                      <NavigationIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                      <NavigationIcon
+                        fontSize="small"
+                        sx={{ mr: 1, verticalAlign: "middle" }}
+                      />
                       Path Controls
                     </Typography>
-                    
+
                     <TextField
                       label="Select Date"
                       type="date"
@@ -702,19 +849,29 @@ const LiveGPSTracker = () => {
                       inputProps={{ max: getTodayDate() }} // Set max attribute to today's date
                       size="small"
                     />
-                    
+
                     {isMobile && (
                       <Box sx={{ mt: 2, mb: 1 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           Select Device:
                         </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                           {devices.map((device, index) => (
                             <Chip
                               key={device.deviceCode}
-                              label={formatDeviceLabel(device.nickname || device.deviceName)}
-                              color={index === selectedDeviceIndex ? "primary" : "default"}
-                              variant={index === selectedDeviceIndex ? "filled" : "outlined"}
+                              label={formatDeviceLabel(
+                                device.nickname || device.deviceName
+                              )}
+                              color={
+                                index === selectedDeviceIndex
+                                  ? "primary"
+                                  : "default"
+                              }
+                              variant={
+                                index === selectedDeviceIndex
+                                  ? "filled"
+                                  : "outlined"
+                              }
                               onClick={() => handleDeviceSelect(index)}
                               size="small"
                               clickable
@@ -723,10 +880,14 @@ const LiveGPSTracker = () => {
                         </Box>
                       </Box>
                     )}
-                    
+
                     <Card variant="outlined" sx={{ mt: 2, mb: 3 }}>
                       <CardContent>
-                        <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                        <Typography
+                          variant="subtitle2"
+                          color="textSecondary"
+                          gutterBottom
+                        >
                           Path Statistics
                         </Typography>
                         <Box sx={{ mb: 2 }}>
@@ -741,7 +902,7 @@ const LiveGPSTracker = () => {
                                 {logsData[selectedDevice]?.length || 0}
                               </Typography>
                             </Grid>
-                            
+
                             <Grid item xs={6}>
                               <Typography variant="body2" color="textSecondary">
                                 Date:
@@ -752,58 +913,88 @@ const LiveGPSTracker = () => {
                                 {date}
                               </Typography>
                             </Grid>
-                            
+
                             {logsData[selectedDevice]?.length > 0 && (
                               <>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" color="textSecondary">
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                  >
                                     Start Time:
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" fontWeight="medium">
-                                    {logsData[selectedDevice][0]?.time || 'N/A'}
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="medium"
+                                  >
+                                    {logsData[selectedDevice][0]?.time || "N/A"}
                                   </Typography>
                                 </Grid>
-                                
+
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" color="textSecondary">
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                  >
                                     End Time:
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" fontWeight="medium">
-                                    {logsData[selectedDevice][logsData[selectedDevice].length-1]?.time || 'N/A'}
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="medium"
+                                  >
+                                    {logsData[selectedDevice][
+                                      logsData[selectedDevice].length - 1
+                                    ]?.time || "N/A"}
                                   </Typography>
                                 </Grid>
                               </>
                             )}
-                            
+
                             {/* Add clicked coordinates to the stats card */}
                             {clickedCoordinates && (
                               <>
                                 <Grid item xs={12}>
-                                  <Typography variant="subtitle2" color="primary" sx={{ mt: 1, fontWeight: 'medium' }}>
+                                  <Typography
+                                    variant="subtitle2"
+                                    color="primary"
+                                    sx={{ mt: 1, fontWeight: "medium" }}
+                                  >
                                     Clicked Location:
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" color="textSecondary">
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                  >
                                     Latitude:
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" fontWeight="medium">
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="medium"
+                                  >
                                     {clickedCoordinates.lat}
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" color="textSecondary">
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                  >
                                     Longitude:
                                   </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2" fontWeight="medium">
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="medium"
+                                  >
                                     {clickedCoordinates.lng}
                                   </Typography>
                                 </Grid>
@@ -813,38 +1004,59 @@ const LiveGPSTracker = () => {
                         </Box>
                       </CardContent>
                     </Card>
-                    
-                    <Button 
-                      variant="outlined" 
-                      color="primary" 
-                      onClick={handleViewOnGMaps} 
-                      fullWidth
-                      startIcon={<MapIcon />}
-                      disabled={!logsData[selectedDevice] || logsData[selectedDevice].length < 2}
-                      sx={{ mb: 2 }}
-                    >
-                      View on Google Maps
-                    </Button>
-                    
-                    <Button 
-                      variant="outlined" 
-                      color="secondary" 
-                      onClick={handleViewOnGraphHopper} 
-                      fullWidth
-                      startIcon={<ExploreIcon />}
-                      disabled={!logsData[selectedDevice] || logsData[selectedDevice].length < 2}
-                    >
-                      View on GraphHopper
-                    </Button>
-                    
-                    <Typography 
-                      variant="caption" 
-                      color="textSecondary" 
-                      sx={{ 
-                        display: 'block', 
-                        textAlign: 'center', 
+
+                    <Stack spacing={2}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleViewOnGMaps}
+                        fullWidth
+                        startIcon={<MapIcon />}
+                        disabled={
+                          !logsData[selectedDevice] ||
+                          logsData[selectedDevice].length < 2
+                        }
+                      >
+                        View on Google Maps
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={handleViewOnGraphHopper}
+                        fullWidth
+                        startIcon={<ExploreIcon />}
+                        disabled={
+                          !logsData[selectedDevice] ||
+                          logsData[selectedDevice].length < 2
+                        }
+                      >
+                        View on GraphHopper
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        color="success"
+                        onClick={SaveAsCsv}
+                        fullWidth
+                        startIcon={<DownloadIcon />}
+                        disabled={
+                          !logsData[selectedDevice] ||
+                          logsData[selectedDevice].length < 2
+                        }
+                      >
+                        Download Report
+                      </Button>
+                    </Stack>
+
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{
+                        display: "block",
+                        textAlign: "center",
                         mt: 3,
-                        opacity: 0.7
+                        opacity: 0.7,
                       }}
                     >
                       {getCurrentDateTime()}
@@ -856,19 +1068,19 @@ const LiveGPSTracker = () => {
           </Grid>
         </Box>
       </Container>
-      
+
       {/* Snackbar for notifications */}
       <Snackbar
         open={Boolean(snackbarMessage)}
         autoHideDuration={4000}
         onClose={() => setSnackbarMessage("")}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert 
-          onClose={() => setSnackbarMessage("")} 
-          severity={snackbarSeverity} 
+        <Alert
+          onClose={() => setSnackbarMessage("")}
+          severity={snackbarSeverity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbarMessage}
         </Alert>
@@ -877,4 +1089,4 @@ const LiveGPSTracker = () => {
   );
 };
 
-export default LiveGPSTracker;  
+export default LiveGPSTracker;
